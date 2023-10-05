@@ -74,27 +74,27 @@ OP4: MOV DPTR,#MSG2		;ROLLING THROUGH RIGHT
 	 SJMP OP4  
 ;-------OUTPUT 5-------------	 
 OP5: MOV DPTR,#MSG1		;ODD NO. LED BLINKING OTHER'S STEADY
-	 LCALL DISPLAY
-	 LCALL DELAY
+	 LCALL DISPLAY ; the op5 and op6 are reverse of each other in selection of the data in dptr; but is selecting the 
+	 LCALL DELAY 		; correct no of leds and the order of numebering in display is also wrong
 	 MOV DPTR,#MSG1
 	 LCALL BLANK
-	 MOV R0,#31H
-	 MOV R2,#01H
+	 MOV R0,#31H ; 31H
+	 MOV R2,#01H ; 01H
    LOOP5:	 LCALL DONE5
-	 CJNE R2,#09H,LOOP5
+	 CJNE R2,#09H,LOOP5 ;09h
 	 LCALL DELAY
 	 SJMP OP5
-   DONE5:	 MOV A,R2
+   DONE5:	 MOV A,R2 ;7seg-led being selected
 	 MOVC A,@A+DPTR
 	 CLR C
 	 SUBB A,#30H
 	 LCALL SEVSEG
 	 CPL A
-	 MOV @R0,A
-	 INC R0
-	 INC R0
+	 MOV @R0,A ; data from ACC being sent to be displayed 
 	 INC R2
 	 INC R2
+	 INC R0
+	 INC R0
 	 RET	 
 ;-------OUTPUT 6-------------	 
 OP6: MOV DPTR,#MSG1		; EVEN NO. LED BLINKING OTHER'S STEADY
@@ -110,32 +110,33 @@ OP6: MOV DPTR,#MSG1		; EVEN NO. LED BLINKING OTHER'S STEADY
 	 SJMP OP6
 ;-------OUTPUT 7------------- 
 OP7:	 ;ROLLING MESSAGE OUTSIDE TO INSIDE
-	 MOV DPTR,#MSG3
-	 MOV 22H,#5
-	 MOV A,DPL
-	 ADD A,#4
-	 MOV DPL,A
-	 MOV 20H,DPL
+	OP7:	 ;ROLLING MESSAGE OUTSIDE TO INSIDE
 	 MOV DPTR,#MSG4
-	 MOV 21H,DPL
- HARDIK:MOV DPL,20H
-	 LCALL LOOP71
-	 MOV DPL,21H
-	 LCALL LOOP72
-	 DEC 20H
-	 INC 21H
-	 LCALL DELAY
-	 DJNZ 22H,HARDIK
-	 LCALL DELAY
-	 SJMP OP7
+	MOV R2,#5
+	 MOV A,DPH ; dpl to dph
+	ADD A,#4
+	 MOV DPH,A ; dpl
+	 MOV 21H,DPH ;dpl ; 20H
+	 MOV DPTR,#MSG3
+	 MOV 20H,DPL ;dpl 21
+; HARDIK:MOV DPH,21H ;dpl 20h
+;	 LCALL LOOP72
+;	 DEC 20H
+;	 LCALL LOOP71
+;	 MOV DPL,21H
+;	 INC 21H
+;	 LCALL DELAY
+;	 DJNZ R2,HARDIK
+;	 ;LCALL DELAY
+;	 SJMP OP7
 	 
-LOOP71:PUSH DPL
-	    PUSH DPH
-	    MOV R0,#30H
+LOOP71: PUSH DPL ;subroutine displays the message string from left to right. 5-8
+	PUSH DPH
+	MOV R0,#30H
 LP71:	 CLR A
 	 MOVC A,@A+DPTR
 	 CLR C
-	 SUBB A,#30H
+	 SUBB A,#30H ; to convert ascii value to 7seg
 	 LCALL SEVSEG
 	 CPL A
 	 MOV @R0,A
@@ -143,18 +144,18 @@ LP71:	 CLR A
 	 INC DPTR
 	 CJNE R0,#34H,LP71
 	 MOV R0,#30H
-	  POP DPH
+	 POP DPH
 	 POP DPL
 	 RET
 	 
 	 
-LOOP72:	 PUSH DPL
+LOOP72:	 PUSH DPL ;subroutine displays the message string from right to left. 1-4
          PUSH DPH
 	 MOV R1,#34H
 LP72:	 CLR A
 	 MOVC A,@A+DPTR
 	 CLR C
-	 SUBB A,#30H
+	 SUBB A,#30H ; to convert ascii value to 7seg
 	 LCALL SEVSEG
 	 CPL A
 	 MOV @R1,A
@@ -165,8 +166,6 @@ LP72:	 CLR A
 	 POP DPH
 	 POP DPL
 	 RET
-
-	 
 ;-------OUTPUT 8-------------	 
 OP8: LCALL BLANK	;ROLLING MESSAGE INSIDE TO OUTSIDE
 	 LCALL DELAY
@@ -176,24 +175,28 @@ OP8: LCALL BLANK	;ROLLING MESSAGE INSIDE TO OUTSIDE
 	 MOV R2,#3H
 	 MOV R3,#4H
 	 CLR C
-   LOOP8:	MOV A,R2
-	 MOVC A,@A+DPTR
+   LOOP8:	
+	 ;prolem solved by switching order of R0 and R1
+	 MOV A,R2
+	 MOVC A,@A+DPTR ; start
 	 CLR C
 	 SUBB A,#30H
 	 LCALL SEVSEG
 	 CPL A
-	 MOV @R0,A
+	 MOV @R1,A ; test case
+	 ;MOV @R0,A ;till here
 	 MOV A,R3	
 	 MOVC A,@A+DPTR
 	 CLR C
 	 SUBB A,#30H
 	 LCALL SEVSEG
 	 CPL A
-	 MOV @R1,A
-	 DEC R0
-	 INC R1
-	 DEC R2
-	 INC R3
+	 MOV @R0,A ;test case
+	 ;MOV @R1,A
+	 DEC R0 ; dec
+	 INC R1  ;inc
+	 DEC R2  ;dec
+	 INC R3   ;inc
 	 LCALL DELAY
 	 CJNE R3,#08H,LOOP8
 	 SJMP OP8
@@ -284,7 +287,7 @@ DEBOUNCE:MOV R5,#250		;20mS DELAY
 
 MSG0: DB "::PUSH::"
 
-MSG1: DB "BE-3 2025"
+MSG1: DB "ELECTRIC"
 
 MSG2: DB "::::::::ELECTRIC::::::::"
 
@@ -292,7 +295,7 @@ MSG3: DB "ELEC::::"
 
 MSG4: DB "::::TRIC"
  
-SEVSEG:INC A
+SEVSEG:	  INC A
 	  MOVC A,@A+PC
 	  RET		;ALL DATA IN COMMON CATHODE
 	  DB 3FH	;0
